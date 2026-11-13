@@ -23,7 +23,7 @@ W,H=1920,1080
 # rather than crop subjects or add black pillarboxing.
 FILTER=("[0:v]split=2[fg][bg];"
         "[bg]scale=1920:1080:force_original_aspect_ratio=increase,"
-        "crop=1920:1080,boxblur=30:10[blur];"
+        "crop=1920:1080,boxblur=18:5[blur];"
         "[fg]scale=1920:1080:force_original_aspect_ratio=decrease[front];"
         "[blur][front]overlay=(W-w)/2:(H-h)/2,setsar=1,"
         "fps=30,format=yuv420p[v]")
@@ -38,7 +38,7 @@ segments=[]
 for idx,video in enumerate(VIDEOS):
     v=ROOT/video
     if not v.exists(): raise FileNotFoundError(v)
-    length=max(1,duration(v)-0.8) # trim the social-media outro
+    length=max(0.5,duration(v)-1.0) # trim the social-media outro
     dest=OUT/f"segment_{len(segments):03d}.mp4"
     run(["ffmpeg","-y","-hide_banner","-loglevel","error","-i",str(v),
          "-filter_complex",FILTER,"-map","[v]","-an","-t",str(length),
