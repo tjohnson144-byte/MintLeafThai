@@ -1,0 +1,22 @@
+name: Render Mint Leaf Studio Tour
+on:
+  push:
+    branches: [mint-leaf-studio-tour-edit]
+    paths:
+      - 'studio-tour/**'
+      - '.github/workflows/render-mint-leaf-tour.yml'
+  workflow_dispatch:
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render original studio footage and photos
+        run: python3 studio-tour/render.py
+      - name: Upload MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: mint-leaf-studio-tour
+          path: studio-tour-output/mint-leaf-studio-tour.mp4
+          retention-days: 14
