@@ -41,7 +41,7 @@ segments=[]
 for idx,video in enumerate(VIDEOS):
     v=ROOT/video
     if not v.exists(): raise FileNotFoundError(v)
-    length=max(0.5,duration(v)-1.0) # trim the social-media outro
+    length=max(0.5,duration(v)-2.5) # conservatively remove extended Instagram outro (review per clip later)
     dest=OUT/f"segment_{len(segments):03d}.mp4"
     run(["ffmpeg","-y","-hide_banner","-loglevel","error","-i",str(v),"-loop","1","-framerate","30","-i",str(ROOT/PHOTOS[idx]),
          "-filter_complex",VIDEO_FILTER,"-map","[v]","-an","-t",str(length),
