@@ -19,14 +19,17 @@ PHOTOS=[
 "hallway.webp","studio.webp","massage-room (2).jpg","room.webp",
 "treatment.webp","therapist.webp","sculpture.webp","tea.webp","products.webp"]
 W,H=1920,1080
-# Preserve the whole portrait frame. Fill side areas with softly blurred copies
-# rather than crop subjects or add black pillarboxing.
-FILTER=("[0:v]split=2[fg][bg];"
-        "[bg]scale=1920:1080:force_original_aspect_ratio=increase,"
-        "crop=1920:1080,boxblur=18:5[blur];"
-        "[fg]scale=1920:1080:force_original_aspect_ratio=decrease[front];"
-        "[blur][front]overlay=(W-w)/2:(H-h)/2,setsar=1,"
-        "fps=30,format=yuv420p[v]")
+# Studio-tour hybrid: a larger, deliberately framed video occupies the left
+# half while a related real studio photograph occupies the right half.
+# Crop only as much as needed to fill each half; no blurred sidebars.
+VIDEO_FILTER=("[0:v]scale=960:1080:force_original_aspect_ratio=increase,"
+              "crop=960:1080,setsar=1,fps=30[left];"
+              "[1:v]scale=960:1080:force_original_aspect_ratio=increase,"
+              "crop=960:1080,setsar=1,fps=30[right];"
+              "[left][right]hstack=inputs=2,format=yuv420p[v]")
+# Still photographs fill the entire widescreen canvas.
+PHOTO_FILTER=("[0:v]scale=1920:1080:force_original_aspect_ratio=increase,"
+              "crop=1920:1080,setsar=1,fps=30,format=yuv420p[v]")
 def run(cmd):
     print("RUN", " ".join(map(str,cmd)),flush=True)
     subprocess.run(cmd,check=True)
@@ -40,15 +43,15 @@ for idx,video in enumerate(VIDEOS):
     if not v.exists(): raise FileNotFoundError(v)
     length=max(0.5,duration(v)-1.0) # trim the social-media outro
     dest=OUT/f"segment_{len(segments):03d}.mp4"
-    run(["ffmpeg","-y","-hide_banner","-loglevel","error","-i",str(v),
-         "-filter_complex",FILTER,"-map","[v]","-an","-t",str(length),
+    run(["ffmpeg","-y","-hide_banner","-loglevel","error","-i",str(v),"-loop","1","-framerate","30","-i",str(ROOT/PHOTOS[idx]),
+         "-filter_complex",VIDEO_FILTER,"-map","[v]","-an","-t",str(length),
          "-c:v","libx264","-preset","veryfast","-crf","22","-pix_fmt","yuv420p",str(dest)])
     segments.append(dest)
     pic=ROOT/PHOTOS[idx]
     if not pic.exists(): raise FileNotFoundError(pic)
     dest=OUT/f"segment_{len(segments):03d}.mp4"
     run(["ffmpeg","-y","-hide_banner","-loglevel","error","-loop","1","-framerate","30","-i",str(pic),
-         "-filter_complex",FILTER,"-map","[v]","-an","-t","3.5",
+         "-filter_complex",PHOTO_FILTER,"-map","[v]","-an","-t","3.5",
          "-c:v","libx264","-preset","veryfast","-crf","22","-pix_fmt","yuv420p",str(dest)])
     segments.append(dest)
 playlist=OUT/"concat.txt"
